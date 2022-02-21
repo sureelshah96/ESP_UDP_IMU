@@ -25,12 +25,6 @@ String addr = String("192,168,137,1");
 #define NTP_INTERVAL 60 * 1000    // In miliseconds
 #define NTP_ADDRESS  "0.us.pool.ntp.org"
 
-// I am using 4 Sliders the 5th one is not used
-const int NUM_SLIDERS = 5;
-// I am using a NODEMCU ESP 32S and pins SVP, SVN, P34, P35, (P32 (Not used))
-const int analogInputs[NUM_SLIDERS] = {36, 39, 34, 35, 32};
-
-int analogSliderValues[NUM_SLIDERS];
 
 AsyncUDP udp;
 
@@ -129,17 +123,8 @@ void sendSliderValues() {
   {
     count=0;
   }
-  // String builtString = String("");
 
-  // for (int i = 0; i < NUM_SLIDERS; i++) {
-  //   builtString += String((int)analogSliderValues[i]);
-  //   // Build the string to broadcast by seperating values using | except for last value
-  //   if (i < NUM_SLIDERS - 1) {
-  //     builtString += String("|");
-  //   }
-  // }
-  // Send UDP Broadcast to 255.255.255.255 (default broadcast addr), Port 2255
-  // Serial.println(addr.c_str());
+ 
   udp.writeTo((uint8_t *)builtString.c_str(), strlen(builtString.c_str()) , IPAddress(192,168,137,1) , (int)2255);
 }
 

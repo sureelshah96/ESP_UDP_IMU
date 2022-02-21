@@ -2,6 +2,10 @@
 	"folders": [
 		{
 			"path": "."
+		},
+		{
+			"name": "ESP_IMU",
+			"path": "C:\\Users\\Sureel\\OneDrive\\Documents\\PlatformIO\\Projects\\ESP_IMU"
 		}
 	],
 	"settings": {
