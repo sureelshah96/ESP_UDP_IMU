@@ -3,6 +3,14 @@
 #include <ESPAsyncUDP.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
+#include "MPU6050_6Axis_MotionApps20.h"
+#include "Wire.h"
+#include "I2Cdev.h"
+#include <ArduinoOTA.h>
+
+
+// #define OUTPUT_READABLE_QUATERNION
+// MPU6050 mpu;
 
 
 const char * ssid = "Primary";
@@ -15,6 +23,11 @@ int LED1 = 2;      // Assign LED1 to pin GPIO2
 
 int LED2 = 16;     // Assign LED1 to pin GPIO16
 
+unsigned long Time = 0;
+unsigned long old_Time = 0;
+int Frequency = 100;
+float transmission_rate = 1000/Frequency;
+
 
 // const char * addr = "192,168,137,1";
 // const uint32_t addr = ("192,168,137,1");
@@ -24,6 +37,9 @@ String addr = String("192,168,137,1");
 #define NTP_OFFSET   60*60*4      // In seconds
 #define NTP_INTERVAL 60 * 1000    // In miliseconds
 #define NTP_ADDRESS  "0.us.pool.ntp.org"
+
+// WiFiServer TelnetServer(2255);
+
 
 
 AsyncUDP udp;
@@ -39,6 +55,10 @@ void setup()
     //   pinMode(analogInputs[i], INPUT);
     // }
     // Get WiFi going
+    // Wire.begin();
+    // Wire.setClock(400000);
+
+
     Serial.begin(115200);
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, pass);
@@ -49,8 +69,37 @@ void setup()
         }
     }
     
+    // mpu.initialize();
+    // Serial.println(F("Testing device connections..."));
+    // Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));
+    
+    ArduinoOTA.onStart([]() {
+    Serial.println("OTA Start");
+    });
+    ArduinoOTA.onEnd([]() {
+      Serial.println("OTA End");
+      Serial.println("Rebooting...");
+    });
+    ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+      Serial.printf("Progress: %u%%\r\n", (progress / (total / 100)));
+    });
+    ArduinoOTA.onError([](ota_error_t error) {
+      Serial.printf("Error[%u]: ", error);
+      if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+      else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+      else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+      else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+      else if (error == OTA_END_ERROR) Serial.println("End Failed");
+    });
+    ArduinoOTA.begin();
+    Serial.println("Ready");
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
 
-    if(udp.listen(IPAddress(192,168,137,195),1000)) 
+    
+    
+    
+    if(udp.listen(IPAddress(192,168,137,178),1000)) 
     {
         Serial.print("UDP Listening on IP: ");
         Serial.println(WiFi.localIP());
@@ -88,11 +137,6 @@ void setup()
             {
               digitalWrite(LED1, LOW);
             }
-            
-            //   delay(200);
-            // digitalWrite(LED2, LOW);
-
-
 
         });
     }
@@ -104,6 +148,7 @@ void setup()
   digitalWrite(LED2, LOW);
 
 }
+
 
 // Get slider pin values
 // void updateSliderValues() {
@@ -117,7 +162,7 @@ void setup()
 void sendSliderValues() {
   count+=1;
   
-  String builtString = (String("ESP: 2  Time: "+timeClient.getFormattedTime()+" ID:"+count));
+  String builtString = (String("ESP: 4  Time: "+timeClient.getFormattedTime()+" ID:"+count));
   
   if (count>1000)
   {
@@ -131,7 +176,16 @@ void sendSliderValues() {
 void loop()
 {
     // updateSliderValues();
-    timeClient.update();
-    sendSliderValues(); // Send data
-    delay(1);
+  ArduinoOTA.handle();
+  Time = millis();
+  timeClient.update();
+  if ((Time-old_Time) >= transmission_rate)
+  {
+    Serial.println(Time-old_Time);
+    sendSliderValues();
+    old_Time = millis();
+  }
+  // sendSliderValues(); // Send data
+  // delay(10);
 }
+
