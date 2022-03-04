@@ -13,19 +13,20 @@
 // MPU6050 mpu;
 
 
-const char * ssid = "Primary";
-const char * pass = "71017101";
+const char * ssid = "ESP";
+const char * pass = "password";
 const char *on = "1";
 const char *off = "0";
 static int count = 0;
 
 int LED1 = 2;      // Assign LED1 to pin GPIO2
 
-int LED2 = 16;     // Assign LED1 to pin GPIO16
+int LED2 = 4;     // Assign LED1 to pin GPIO16
 
 unsigned long Time = 0;
 unsigned long old_Time = 0;
-int Frequency = 100;
+
+int Frequency = 1;
 float transmission_rate = 1000/Frequency;
 
 
@@ -99,7 +100,7 @@ void setup()
     
     
     
-    if(udp.listen(IPAddress(192,168,137,178),1000)) 
+    if(udp.listen(IPAddress(192,168,1,4),1000)) 
     {
         Serial.print("UDP Listening on IP: ");
         Serial.println(WiFi.localIP());
@@ -131,11 +132,13 @@ void setup()
             if(*data==*on)
             {
               digitalWrite(LED1, HIGH);
+              digitalWrite(LED2, LOW);
             }
             // else if(strcmp(data, off) == 0)
             else if(*data==*off)
             {
               digitalWrite(LED1, LOW);
+              digitalWrite(LED2, HIGH);
             }
 
         });
@@ -145,7 +148,10 @@ void setup()
   pinMode(LED1, OUTPUT);
 
   pinMode(LED2, OUTPUT);
+
+  digitalWrite(LED1, LOW);
   digitalWrite(LED2, LOW);
+  
 
 }
 
@@ -170,7 +176,7 @@ void sendSliderValues() {
   }
 
  
-  udp.writeTo((uint8_t *)builtString.c_str(), strlen(builtString.c_str()) , IPAddress(192,168,137,1) , (int)2255);
+  udp.writeTo((uint8_t *)builtString.c_str(), strlen(builtString.c_str()) , IPAddress(192,168,1,3) , (int)2255);
 }
 
 void loop()
@@ -178,7 +184,7 @@ void loop()
     // updateSliderValues();
   ArduinoOTA.handle();
   Time = millis();
-  timeClient.update();
+  // timeClient.update();
   if ((Time-old_Time) >= transmission_rate)
   {
     Serial.println(Time-old_Time);
