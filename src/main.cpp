@@ -9,9 +9,6 @@
 #include <ArduinoOTA.h>
 
 
-// #define OUTPUT_READABLE_QUATERNION
-// MPU6050 mpu;
-
 
 const char * ssid = "ESP";
 const char * pass = "password";
@@ -21,25 +18,22 @@ static int count = 0;
 
 int LED1 = 2;      // Assign LED1 to pin GPIO2
 
-int LED2 = 4;     // Assign LED1 to pin GPIO16
+int LED2 = 4;     // Assign LED2 to pin GPIO4, Used for STM interrupt
 
 unsigned long Time = 0;
 unsigned long old_Time = 0;
 
-int Frequency = 1;
+int Frequency = 1;  //Hz
 float transmission_rate = 1000/Frequency;
 
 
-// const char * addr = "192,168,137,1";
-// const uint32_t addr = ("192,168,137,1");
+
 String addr = String("192,168,137,1");
-// long unsigned int *addr = "192.168.137.1";
 
 #define NTP_OFFSET   60*60*4      // In seconds
 #define NTP_INTERVAL 60 * 1000    // In miliseconds
 #define NTP_ADDRESS  "0.us.pool.ntp.org"
 
-// WiFiServer TelnetServer(2255);
 
 
 
@@ -51,15 +45,7 @@ NTPClient timeClient(ntpUDP, NTP_ADDRESS, NTP_OFFSET, NTP_INTERVAL);
 
 void setup()
 {
-    // Set all slider pins to INPUT
-    // for (int i = 0; i < NUM_SLIDERS; i++) {
-    //   pinMode(analogInputs[i], INPUT);
-    // }
-    // Get WiFi going
-    // Wire.begin();
-    // Wire.setClock(400000);
-
-
+   
     Serial.begin(115200);
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, pass);
@@ -69,10 +55,6 @@ void setup()
             delay(1000);
         }
     }
-    
-    // mpu.initialize();
-    // Serial.println(F("Testing device connections..."));
-    // Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));
     
     ArduinoOTA.onStart([]() {
     Serial.println("OTA Start");
@@ -105,36 +87,22 @@ void setup()
         Serial.print("UDP Listening on IP: ");
         Serial.println(WiFi.localIP());
         udp.onPacket([](AsyncUDPPacket packet) {
-            // Serial.print("UDP Packet Type: ");
-            // Serial.print(packet.isBroadcast()?"Broadcast":packet.isMulticast()?"Multicast":"Unicast");
             Serial.print("From: ");
             Serial.print(packet.remoteIP());
             Serial.print(":");
             Serial.print(packet.remotePort());
-            // Serial.print(", To: ");
-            // Serial.print(packet.localIP());
-            // Serial.print(":");
-            // Serial.print(packet.localPort());
-            // Serial.print(", Length: ");
-            // Serial.print(packet.length());
             Serial.print(", Data: ");
             Serial.write(packet.data(), packet.length());
             Serial.println();
-            //reply to the client
-            // packet.printf("Got %u bytes of data", packet.length());
+          
             char *data = (char*)packet.data();
 
-            // Serial.println(*data);            
-            // Serial.println(*on);
 
-
-            // if(strcmp(data,on) == 0)
             if(*data==*on)
             {
-              digitalWrite(LED1, HIGH);
+              digitalWrite(LED1, HIGH);  //Onboard LED
               digitalWrite(LED2, LOW);
             }
-            // else if(strcmp(data, off) == 0)
             else if(*data==*off)
             {
               digitalWrite(LED1, LOW);
@@ -156,15 +124,6 @@ void setup()
 }
 
 
-// Get slider pin values
-// void updateSliderValues() {
-//   for (int i = 0; i < NUM_SLIDERS; i++) {
-//      analogSliderValues[i] = analogRead(analogInputs[i]);
-//   }
-// }
-
-// TODO only send values if there is significant change in values to limit network traffick
-// UDP Broadcast slider values
 void sendSliderValues() {
   count+=1;
   
@@ -181,7 +140,6 @@ void sendSliderValues() {
 
 void loop()
 {
-    // updateSliderValues();
   ArduinoOTA.handle();
   Time = millis();
   // timeClient.update();
@@ -191,7 +149,6 @@ void loop()
     sendSliderValues();
     old_Time = millis();
   }
-  // sendSliderValues(); // Send data
-  // delay(10);
+  
 }
 
